@@ -16,6 +16,7 @@ Kaufkiste ist ein mobiler PWA-Prototyp fuer einen gemeinsam nutzbaren Einkaufsze
 - Import und Export der JSON-Daten in den Einstellungen
 - JSON-Leselink fuer direkte JSON-Dateien, Dropbox-Links und Google-Links
 - JSON-Schreiblink fuer beschreibbare Endpunkte wie Google Apps Script oder Webhooks
+- Zugriffstoken fuer geschuetzte Google-Apps-Script-Endpunkte
 - Deutsch und Englisch, weitere Sprachen leicht erweiterbar
 - PWA-Unterstuetzung mit Manifest, Icons und Service Worker
 
@@ -46,4 +47,4 @@ Die App speichert lokal im Browser und kann den kompletten Datenstand als JSON e
 
 Zusaetzlich kann in den Einstellungen ein JSON-Leselink hinterlegt werden. Direkte JSON-URLs funktionieren, wenn der Anbieter den Zugriff aus dem Browser erlaubt. Dropbox-Freigabelinks und typische Google-Drive-/Google-Docs-Links werden in Download-Links umgewandelt; Google kann direkte Browser-Zugriffe je nach Freigabe und CORS-Regeln trotzdem blockieren.
 
-Fuer echtes Speichern zu Google kann die Vorlage `docs/google-apps-script-storage.gs` als Google Apps Script Web App genutzt werden. Die `/exec`-URL wird in Kaufkiste als Lese- und Schreiblink eingetragen.
+Fuer echtes Speichern zu Google kann die Vorlage `docs/google-apps-script-storage.gs` als Google Apps Script Web App genutzt werden. In der Vorlage muss `ACCESS_TOKEN` auf einen langen geheimen Wert gesetzt werden. Die `/exec`-URL wird in Kaufkiste als Lese- und Schreiblink eingetragen; dasselbe Token wird im Feld Zugriffstoken gespeichert. Kaufkiste haengt das Token beim Laden und Speichern automatisch an die Anfrage an. Das Token bleibt lokal im Browser und wird nicht in die gemeinsame JSON-Datei geschrieben.
