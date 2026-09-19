@@ -6,19 +6,47 @@
   2. Paste this file into Code.gs.
   3. Optional: set DOCUMENT_ID to the ID of a Google Doc that should contain the JSON.
      If DOCUMENT_ID stays empty, the script creates/updates a Drive file named kaufkiste.json.
-  4. Deploy as Web app:
+  4. Set ACCESS_TOKEN to a long secret value and enter the same token in Kaufkiste.
+  5. Deploy as Web app:
      - Execute as: Me
      - Who has access: Anyone with the link
-  5. Copy the /exec URL into Kaufkiste as JSON read link and JSON write link.
+  6. Copy the /exec URL into Kaufkiste as JSON read link and JSON write link.
 */
 
 var DOCUMENT_ID = "";
 var FILE_NAME = "kaufkiste.json";
+var ACCESS_TOKEN = "";
 
 function doGet(e) {
-  var payload = readPayload_();
   var callback = e && e.parameter && e.parameter.callback;
+  if (!isAuthorized_(e)) return output_(JSON.stringify({ ok: false, error: "Unauthorized" }), callback);
 
+  return output_(readPayload_(), callback);
+}
+
+function doPost(e) {
+  if (!isAuthorized_(e)) {
+    return output_(JSON.stringify({ ok: false, error: "Unauthorized" }));
+  }
+
+  var payload = (e && e.parameter && e.parameter.payload) ||
+    (e && e.postData && e.postData.contents) ||
+    "{}";
+
+  JSON.parse(payload);
+  writePayload_(payload);
+
+  return output_(JSON.stringify({ ok: true, updatedAt: new Date().toISOString() }));
+}
+
+function isAuthorized_(e) {
+  return ACCESS_TOKEN &&
+    e &&
+    e.parameter &&
+    e.parameter.token === ACCESS_TOKEN;
+}
+
+function output_(payload, callback) {
   if (callback) {
     return ContentService
       .createTextOutput(callback + "(" + payload + ");")
@@ -27,19 +55,6 @@ function doGet(e) {
 
   return ContentService
     .createTextOutput(payload)
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function doPost(e) {
-  var payload = (e && e.parameter && e.parameter.payload) ||
-    (e && e.postData && e.postData.contents) ||
-    "{}";
-
-  JSON.parse(payload);
-  writePayload_(payload);
-
-  return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, updatedAt: new Date().toISOString() }))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
