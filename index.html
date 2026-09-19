@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kaufkiste Prototyp</title>
+  <meta name="description" content="Kaufkiste ist ein mobiler, gemeinsam nutzbarer Einkaufszettel ohne eigenen Server.">
+  <meta name="theme-color" content="#18785b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Kaufkiste">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-bar panel">
+      <div>
+        <h1 data-i18n="appTitle">Kaufkiste</h1>
+        <p data-i18n="appSubtitle">Geteilte Datei, kein Konto, kein Server</p>
+      </div>
+      <div class="app-actions">
+        <span class="badge" id="modeBadge">Planen</span>
+        <button class="icon-button" id="settingsToggle" type="button" data-view="settings" aria-label="Einstellungen" title="Einstellungen">⚙</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="toolbar panel" id="listToolbar">
+        <div class="title-block">
+          <h2 id="activeListTitle">-</h2>
+          <p id="activeListMeta">-</p>
+        </div>
+        <div class="mode-tabs" role="tablist" aria-label="Modus">
+          <button class="active" id="planMode" type="button" data-mode="plan" data-i18n="plan">Planen</button>
+          <button id="shopMode" type="button" data-mode="shop" data-i18n="shop">Einkaufen</button>
+        </div>
+      </section>
+
+      <section class="screen panel active" id="screenList">
+        <div class="section-title">
+          <h2 data-i18n="lists">Zettel</h2>
+          <span class="badge" id="listCount">0</span>
+        </div>
+        <div class="list-stack" id="lists"></div>
+        <form class="new-list" id="newListForm">
+          <input class="text-input" id="newListName" data-i18n-placeholder="newListPlaceholder" placeholder="Neuer Zettel">
+          <button class="primary" type="submit" data-i18n="createList">Anlegen</button>
+        </form>
+
+        <div class="section-title spaced">
+          <h2 id="itemsHeadline">Aktive Artikel</h2>
+          <span class="badge" id="activeCount">0</span>
+        </div>
+        <div class="item-list" id="items"></div>
+
+        <div id="planPortfolioSection">
+          <div class="section-title spaced">
+            <h2 data-i18n="portfolio">Portfolio</h2>
+            <span class="badge" id="portfolioCount">0</span>
+          </div>
+          <form class="portfolio-form" id="portfolioForm">
+            <label class="field-label">
+              <span data-i18n="portfolioName">Name</span>
+              <input class="text-input" id="portfolioName" data-i18n-placeholder="portfolioName" placeholder="Name">
+            </label>
+            <label class="field-label">
+              <span data-i18n="portfolioUnit">Anzahl</span>
+              <input class="text-input" id="portfolioUnit" data-i18n-placeholder="portfolioUnit" placeholder="Anzahl">
+            </label>
+            <div class="button-row">
+              <button class="primary" type="submit" id="savePortfolioItem" data-i18n="saveItem">Speichern</button>
+              <button class="ghost" type="button" id="cancelPortfolioEdit" data-i18n="cancel">Abbrechen</button>
+            </div>
+          </form>
+          <input class="search" id="portfolioSearch" data-i18n-placeholder="searchPlaceholder" placeholder="Artikel suchen">
+          <div class="portfolio-list" id="portfolio"></div>
+        </div>
+      </section>
+
+      <section class="screen panel" id="screenSettings">
+        <div class="section-title">
+          <h2 data-i18n="settings">Einstellungen</h2>
+        </div>
+        <div class="data-box">
+          <label class="field-label">
+            <span data-i18n="languageLabel">Sprache</span>
+            <select class="select-input" id="language">
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <label class="field-label">
+            <span data-i18n="provider">Dienst</span>
+            <select class="select-input" id="provider">
+              <option>Google Docs</option>
+              <option>Dropbox</option>
+              <option>iCloud</option>
+            </select>
+          </label>
+          <p class="hint" data-i18n="storageHint">Die JSON-Datei liegt in einem synchronisierten Ordner. Alle Nutzer importieren oder exportieren dieselbe Datei.</p>
+          <div class="button-row">
+            <button class="secondary" id="exportJson" type="button" data-i18n="exportJson">JSON exportieren</button>
+            <button class="ghost" id="importJsonBtn" type="button" data-i18n="importJson">JSON importieren</button>
+            <input class="file-input" id="importJson" type="file" accept="application/json,.json">
+          </div>
+        </div>
+
+        <div class="section-title spaced">
+          <h2 data-i18n="summary">Status</h2>
+        </div>
+        <p class="hint" id="modeHint"></p>
+        <div class="stat-grid">
+          <div class="stat"><b id="statActive">0</b><span data-i18n="active">aktiv</span></div>
+          <div class="stat"><b id="statInactive">0</b><span data-i18n="inactive">deaktiviert</span></div>
+          <div class="stat"><b id="statKnown">0</b><span data-i18n="known">Portfolio</span></div>
+          <div class="stat"><b id="statLists">0</b><span data-i18n="lists">Zettel</span></div>
+        </div>
+
+        <div class="section-title spaced">
+          <h2 data-i18n="dataModel">Datenmodell</h2>
+        </div>
+        <pre class="json-preview" id="jsonPreview"></pre>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</body>
+</html>
