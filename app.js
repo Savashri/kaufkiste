@@ -14,7 +14,14 @@ const i18n = {
     newListPlaceholder: "Neuer Zettel",
     createList: "Anlegen",
     provider: "Dienst",
-    storageHint: "Die JSON-Datei liegt in einem synchronisierten Ordner. Alle Nutzer importieren oder exportieren dieselbe Datei.",
+    storageHint: "Ein direkter JSON-Link kann gelesen werden, wenn der Anbieter Browser-Zugriff erlaubt. Zum Speichern braucht Kaufkiste eine Schreib-URL, zum Beispiel aus Google Apps Script.",
+    readUrlLabel: "JSON-Leselink",
+    readUrlPlaceholder: "Google-Docs-, Drive-, Dropbox- oder JSON-Link",
+    writeUrlLabel: "JSON-Schreiblink",
+    writeUrlPlaceholder: "Optional: Apps-Script- oder Webhook-URL",
+    saveStorageSettings: "Link merken",
+    loadRemoteJson: "Vom Link laden",
+    saveRemoteJson: "Zum Link speichern",
     exportJson: "JSON exportieren",
     importJson: "JSON importieren",
     plan: "Planen",
@@ -49,6 +56,18 @@ const i18n = {
     created: "Zettel angelegt und im Modus Planen geöffnet.",
     exported: "JSON-Datei vorbereitet.",
     imported: "JSON-Datei importiert.",
+    storageSaved: "Speicherlink gespeichert.",
+    remoteMissing: "Bitte zuerst einen JSON-Leselink eintragen.",
+    remoteSaveMissing: "Bitte zuerst einen JSON-Schreiblink eintragen.",
+    remoteLoading: "Lade JSON vom Link...",
+    remoteSaving: "Speichere JSON zum Link...",
+    remoteLoaded: "JSON vom Link geladen.",
+    remoteSaved: "JSON zum Link gespeichert.",
+    remoteSent: "JSON an Schreiblink gesendet.",
+    remoteLoadFailed: "JSON konnte vom Link nicht geladen werden.",
+    remoteSaveFailed: "JSON konnte nicht zum Link gespeichert werden.",
+    remoteNeverSynced: "Noch nicht mit einem Link synchronisiert.",
+    remoteLastSync: "Letzte Synchronisierung",
     savedLocal: "Lokaler Entwurf aktualisiert.",
     duplicate: "Artikel ist bereits aktiv auf dem Zettel.",
     portfolioLocked: "Das Portfolio ist nur im Modus Planen pflegbar.",
@@ -64,7 +83,14 @@ const i18n = {
     newListPlaceholder: "New list",
     createList: "Create",
     provider: "Service",
-    storageHint: "The JSON file lives in a synced folder. Everyone imports or exports the same file.",
+    storageHint: "A direct JSON link can be loaded when the provider allows browser access. Saving needs a write URL, for example from Google Apps Script.",
+    readUrlLabel: "JSON read link",
+    readUrlPlaceholder: "Google Docs, Drive, Dropbox, or JSON link",
+    writeUrlLabel: "JSON write link",
+    writeUrlPlaceholder: "Optional: Apps Script or webhook URL",
+    saveStorageSettings: "Remember link",
+    loadRemoteJson: "Load from link",
+    saveRemoteJson: "Save to link",
     exportJson: "Export JSON",
     importJson: "Import JSON",
     plan: "Plan",
@@ -99,6 +125,18 @@ const i18n = {
     created: "List created and opened in planning mode.",
     exported: "JSON file prepared.",
     imported: "JSON file imported.",
+    storageSaved: "Storage link saved.",
+    remoteMissing: "Add a JSON read link first.",
+    remoteSaveMissing: "Add a JSON write link first.",
+    remoteLoading: "Loading JSON from link...",
+    remoteSaving: "Saving JSON to link...",
+    remoteLoaded: "JSON loaded from link.",
+    remoteSaved: "JSON saved to link.",
+    remoteSent: "JSON sent to write link.",
+    remoteLoadFailed: "Could not load JSON from link.",
+    remoteSaveFailed: "Could not save JSON to link.",
+    remoteNeverSynced: "Not synced with a link yet.",
+    remoteLastSync: "Last sync",
     savedLocal: "Local draft updated.",
     duplicate: "Item is already active on this list.",
     portfolioLocked: "The portfolio can only be maintained while planning a list.",
@@ -242,7 +280,8 @@ const state = {
   portfolioQuery: "",
   editingPortfolioId: null,
   drag: null,
-  pointerDrag: null
+  pointerDrag: null,
+  remoteStatus: ""
 };
 
 function slug(value) {
@@ -258,11 +297,23 @@ function makeId(prefix) {
   return `${prefix}-${Date.now()}-${Math.round(Math.random() * 1000)}`;
 }
 
+function defaultStorage() {
+  return {
+    provider: "iCloud",
+    fileName: "kaufkiste.json",
+    format: "json",
+    readUrl: "",
+    writeUrl: "",
+    lastSyncedAt: "",
+    lastSyncStatus: ""
+  };
+}
+
 function createSeedData() {
   return {
-    version: 2,
+    version: 3,
     locale: "de",
-    storage: { provider: "iCloud", fileName: "kaufkiste.json", format: "json" },
+    storage: defaultStorage(),
     portfolio: seedItems.map((name, index) => ({
       id: slug(name),
       names: { de: name, en: name },
@@ -301,9 +352,9 @@ function loadData() {
 
 function normalizeData(data) {
   const normalized = {
-    version: 2,
+    version: 3,
     locale: data.locale || "de",
-    storage: data.storage || { provider: "iCloud", fileName: "kaufkiste.json", format: "json" },
+    storage: normalizeStorage(data.storage),
     portfolio: [],
     lists: []
   };
@@ -333,6 +384,21 @@ function normalizeData(data) {
   return normalized;
 }
 
+function normalizeStorage(storage = {}) {
+  const defaults = defaultStorage();
+  return {
+    ...defaults,
+    ...storage,
+    provider: storage.provider || defaults.provider,
+    fileName: storage.fileName || defaults.fileName,
+    format: storage.format || defaults.format,
+    readUrl: storage.readUrl || storage.url || "",
+    writeUrl: storage.writeUrl || "",
+    lastSyncedAt: storage.lastSyncedAt || "",
+    lastSyncStatus: storage.lastSyncStatus || ""
+  };
+}
+
 function t(key) {
   return i18n[state.language]?.[key] || i18n.en[key] || key;
 }
@@ -352,6 +418,39 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function syncInputValue(selector, value) {
+  const input = qs(selector);
+  if (document.activeElement !== input) input.value = value || "";
+}
+
+function storage() {
+  state.data.storage = normalizeStorage(state.data.storage);
+  return state.data.storage;
+}
+
+function readStorageInputs() {
+  const current = storage();
+  current.provider = qs("#provider").value;
+  current.readUrl = qs("#storageReadUrl").value.trim();
+  current.writeUrl = qs("#storageWriteUrl").value.trim();
+  current.fileName = current.fileName || "kaufkiste.json";
+  current.format = "json";
+  return current;
+}
+
+function setRemoteStatus(messageKey) {
+  state.remoteStatus = messageKey ? t(messageKey) : "";
+  const node = qs("#remoteStatus");
+  if (node) node.textContent = state.remoteStatus || syncStatusText();
+}
+
+function syncStatusText() {
+  const { lastSyncedAt } = storage();
+  if (!lastSyncedAt) return t("remoteNeverSynced");
+  const date = new Date(lastSyncedAt).toLocaleString(state.language === "de" ? "de-DE" : "en-US");
+  return `${t("remoteLastSync")}: ${date}`;
 }
 
 function persist(messageKey) {
@@ -695,7 +794,10 @@ function renderHeader() {
   qs("#modeBadge").textContent = list.mode === "shop" ? t("shop") : t("plan");
   qs("#planMode").classList.toggle("active", list.mode === "plan");
   qs("#shopMode").classList.toggle("active", list.mode === "shop");
-  qs("#provider").value = state.data.storage.provider;
+  qs("#provider").value = storage().provider;
+  syncInputValue("#storageReadUrl", storage().readUrl);
+  syncInputValue("#storageWriteUrl", storage().writeUrl);
+  qs("#remoteStatus").textContent = state.remoteStatus || syncStatusText();
   qs("#language").value = state.language;
 }
 
@@ -748,16 +850,211 @@ function importJson(file) {
   reader.onload = () => {
     try {
       const parsed = JSON.parse(reader.result);
-      if (!Array.isArray(parsed.lists) || !Array.isArray(parsed.portfolio)) throw new Error("Invalid shape");
-      state.data = normalizeData(parsed);
-      state.activeListId = state.data.lists[0]?.id;
-      state.language = state.data.locale || state.language;
+      applyIncomingData(parsed, storage());
       persist("imported");
     } catch {
       showToast("JSON konnte nicht gelesen werden.");
     }
   };
   reader.readAsText(file);
+}
+
+function applyIncomingData(parsed, currentStorage = storage()) {
+  if (!Array.isArray(parsed.lists) || !Array.isArray(parsed.portfolio)) throw new Error("Invalid shape");
+  state.data = normalizeData(parsed);
+  state.data.storage = normalizeStorage({
+    ...currentStorage,
+    ...state.data.storage,
+    readUrl: state.data.storage.readUrl || currentStorage.readUrl,
+    writeUrl: state.data.storage.writeUrl || currentStorage.writeUrl
+  });
+  state.activeListId = state.data.lists[0]?.id;
+  state.language = state.data.locale || state.language;
+}
+
+function rememberStorageSettings() {
+  readStorageInputs();
+  persist("storageSaved");
+}
+
+function withQuery(url, params) {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}${new URLSearchParams(params).toString()}`;
+}
+
+function transformedStorageUrl(url) {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+
+  const googleFileMatch = trimmed.match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (googleFileMatch) return `https://drive.google.com/uc?export=download&id=${googleFileMatch[1]}`;
+
+  const googleOpenMatch = trimmed.match(/[?&]id=([^&]+)/);
+  if (trimmed.includes("drive.google.com") && googleOpenMatch) {
+    return `https://drive.google.com/uc?export=download&id=${googleOpenMatch[1]}`;
+  }
+
+  const googleDocMatch = trimmed.match(/docs\.google\.com\/document\/d\/([^/]+)/);
+  if (googleDocMatch) return `https://docs.google.com/document/d/${googleDocMatch[1]}/export?format=txt`;
+
+  if (trimmed.includes("dropbox.com")) {
+    try {
+      const dropboxUrl = new URL(trimmed);
+      dropboxUrl.hostname = "dl.dropboxusercontent.com";
+      dropboxUrl.searchParams.delete("dl");
+      dropboxUrl.searchParams.delete("raw");
+      return dropboxUrl.toString();
+    } catch {
+      return trimmed.replace("www.dropbox.com", "dl.dropboxusercontent.com").replace("?dl=0", "?dl=1");
+    }
+  }
+
+  return trimmed;
+}
+
+function candidateReadUrls(url) {
+  const transformed = transformedStorageUrl(url);
+  return [...new Set([url.trim(), transformed].filter(Boolean))];
+}
+
+function jsonpLoad(url) {
+  return new Promise((resolve, reject) => {
+    const callbackName = `kaufkisteJsonp${Date.now()}${Math.round(Math.random() * 1000)}`;
+    const script = document.createElement("script");
+    const timeout = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("JSONP timeout"));
+    }, 12000);
+
+    function cleanup() {
+      window.clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+
+    window[callbackName] = (payload) => {
+      cleanup();
+      resolve(payload);
+    };
+
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("JSONP failed"));
+    };
+    script.src = withQuery(url, { callback: callbackName, _: Date.now() });
+    document.body.appendChild(script);
+  });
+}
+
+async function fetchRemoteJson(url) {
+  if (url.includes("script.google.com")) return jsonpLoad(url);
+
+  let lastError;
+  for (const candidate of candidateReadUrls(url)) {
+    try {
+      const response = await fetch(candidate, { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return JSON.parse(await response.text());
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("No readable URL");
+}
+
+async function loadRemoteJson() {
+  const currentStorage = readStorageInputs();
+  if (!currentStorage.readUrl) {
+    showToast(t("remoteMissing"));
+    return;
+  }
+
+  try {
+    setRemoteStatus("remoteLoading");
+    const parsed = await fetchRemoteJson(currentStorage.readUrl);
+    applyIncomingData(parsed, currentStorage);
+    storage().lastSyncedAt = new Date().toISOString();
+    storage().lastSyncStatus = "loaded";
+    state.remoteStatus = "";
+    persist("remoteLoaded");
+  } catch (error) {
+    console.warn("Remote JSON load failed", error);
+    setRemoteStatus("remoteLoadFailed");
+    showToast(t("remoteLoadFailed"));
+  }
+}
+
+function postForm(url, payload) {
+  return new Promise((resolve) => {
+    const frameName = `kaufkiste-sync-${Date.now()}`;
+    const iframe = document.createElement("iframe");
+    const form = document.createElement("form");
+    const fields = {
+      payload,
+      fileName: storage().fileName || "kaufkiste.json",
+      source: "kaufkiste"
+    };
+
+    iframe.name = frameName;
+    iframe.hidden = true;
+    form.hidden = true;
+    form.method = "POST";
+    form.action = url;
+    form.target = frameName;
+
+    Object.entries(fields).forEach(([name, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.appendChild(input);
+    });
+
+    document.body.append(iframe, form);
+    form.submit();
+    window.setTimeout(() => {
+      form.remove();
+      iframe.remove();
+      resolve();
+    }, 1800);
+  });
+}
+
+async function saveRemoteJson() {
+  const currentStorage = readStorageInputs();
+  const targetUrl = currentStorage.writeUrl || (currentStorage.readUrl.includes("script.google.com") ? currentStorage.readUrl : "");
+  if (!targetUrl) {
+    showToast(t("remoteSaveMissing"));
+    return;
+  }
+
+  try {
+    setRemoteStatus("remoteSaving");
+    const payload = JSON.stringify(state.data, null, 2);
+    if (targetUrl.includes("script.google.com")) {
+      await postForm(targetUrl, payload);
+      storage().lastSyncStatus = "sent";
+      storage().lastSyncedAt = new Date().toISOString();
+      state.remoteStatus = "";
+      persist("remoteSent");
+      return;
+    }
+
+    const response = await fetch(targetUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    storage().lastSyncStatus = "saved";
+    storage().lastSyncedAt = new Date().toISOString();
+    state.remoteStatus = "";
+    persist("remoteSaved");
+  } catch (error) {
+    console.warn("Remote JSON save failed", error);
+    setRemoteStatus("remoteSaveFailed");
+    showToast(t("remoteSaveFailed"));
+  }
 }
 
 function rowFromDragTarget(target) {
@@ -887,8 +1184,8 @@ qs("#language").addEventListener("change", (event) => {
 });
 
 qs("#provider").addEventListener("change", (event) => {
-  state.data.storage.provider = event.target.value;
-  persist("savedLocal");
+  storage().provider = event.target.value;
+  persist("storageSaved");
 });
 
 qs("#portfolioSearch").addEventListener("input", (event) => {
@@ -898,6 +1195,9 @@ qs("#portfolioSearch").addEventListener("input", (event) => {
 
 qs("#exportJson").addEventListener("click", exportJson);
 qs("#importJsonBtn").addEventListener("click", () => qs("#importJson").click());
+qs("#saveStorageSettings").addEventListener("click", rememberStorageSettings);
+qs("#loadRemoteJson").addEventListener("click", loadRemoteJson);
+qs("#saveRemoteJson").addEventListener("click", saveRemoteJson);
 qs("#importJson").addEventListener("change", (event) => {
   const [file] = event.target.files;
   if (file) importJson(file);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Kaufkiste Prototyp</title>
+  <title>Kaufkiste</title>
   <meta name="description" content="Kaufkiste ist ein mobiler, gemeinsam nutzbarer Einkaufszettel ohne eigenen Server.">
   <meta name="theme-color" content="#18785b">
   <meta name="mobile-web-app-capable" content="yes">
@@ -98,11 +98,27 @@
             <span data-i18n="provider">Dienst</span>
             <select class="select-input" id="provider">
               <option>Google Docs</option>
+              <option>Google Drive</option>
               <option>Dropbox</option>
               <option>iCloud</option>
+              <option>Andere URL</option>
             </select>
           </label>
-          <p class="hint" data-i18n="storageHint">Die JSON-Datei liegt in einem synchronisierten Ordner. Alle Nutzer importieren oder exportieren dieselbe Datei.</p>
+          <label class="field-label">
+            <span data-i18n="readUrlLabel">JSON-Leselink</span>
+            <input class="text-input" id="storageReadUrl" inputmode="url" autocomplete="url" data-i18n-placeholder="readUrlPlaceholder" placeholder="https://...">
+          </label>
+          <label class="field-label">
+            <span data-i18n="writeUrlLabel">JSON-Schreiblink</span>
+            <input class="text-input" id="storageWriteUrl" inputmode="url" autocomplete="url" data-i18n-placeholder="writeUrlPlaceholder" placeholder="Optional">
+          </label>
+          <p class="hint" data-i18n="storageHint">Ein direkter JSON-Link kann gelesen werden, wenn der Anbieter Browser-Zugriff erlaubt. Zum Speichern braucht Kaufkiste eine Schreib-URL, zum Beispiel aus Google Apps Script.</p>
+          <div class="button-row storage-actions">
+            <button class="ghost" id="saveStorageSettings" type="button" data-i18n="saveStorageSettings">Link merken</button>
+            <button class="secondary" id="loadRemoteJson" type="button" data-i18n="loadRemoteJson">Vom Link laden</button>
+            <button class="primary" id="saveRemoteJson" type="button" data-i18n="saveRemoteJson">Zum Link speichern</button>
+          </div>
+          <p class="hint" id="remoteStatus"></p>
           <div class="button-row">
             <button class="secondary" id="exportJson" type="button" data-i18n="exportJson">JSON exportieren</button>
             <button class="ghost" id="importJsonBtn" type="button" data-i18n="importJson">JSON importieren</button>
