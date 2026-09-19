@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Kaufkiste Icon">
+  <rect width="512" height="512" rx="112" fill="#18785b"/>
+  <path d="M126 184h260l-25 210H151l-25-210Z" fill="#fffdf9"/>
+  <path d="M176 184c0-54 35-92 80-92s80 38 80 92" fill="none" stroke="#fffdf9" stroke-width="34" stroke-linecap="round"/>
+  <path d="M184 276h144M184 332h104" stroke="#18785b" stroke-width="30" stroke-linecap="round"/>
+  <circle cx="350" cy="332" r="22" fill="#2468b2"/>
+</svg>
