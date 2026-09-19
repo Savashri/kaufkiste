@@ -14,11 +14,13 @@ const i18n = {
     newListPlaceholder: "Neuer Zettel",
     createList: "Anlegen",
     provider: "Dienst",
-    storageHint: "Ein direkter JSON-Link kann gelesen werden, wenn der Anbieter Browser-Zugriff erlaubt. Zum Speichern braucht Kaufkiste eine Schreib-URL, zum Beispiel aus Google Apps Script.",
+    storageHint: "Ein direkter JSON-Link kann gelesen werden, wenn der Anbieter Browser-Zugriff erlaubt. Zum Speichern braucht Kaufkiste eine Schreib-URL, zum Beispiel aus Google Apps Script. Das Token bleibt lokal und wird nicht in die gemeinsame JSON geschrieben.",
     readUrlLabel: "JSON-Leselink",
     readUrlPlaceholder: "Google-Docs-, Drive-, Dropbox- oder JSON-Link",
     writeUrlLabel: "JSON-Schreiblink",
     writeUrlPlaceholder: "Optional: Apps-Script- oder Webhook-URL",
+    tokenLabel: "Zugriffstoken",
+    tokenPlaceholder: "Token aus Google Apps Script",
     saveStorageSettings: "Link merken",
     loadRemoteJson: "Vom Link laden",
     saveRemoteJson: "Zum Link speichern",
@@ -83,11 +85,13 @@ const i18n = {
     newListPlaceholder: "New list",
     createList: "Create",
     provider: "Service",
-    storageHint: "A direct JSON link can be loaded when the provider allows browser access. Saving needs a write URL, for example from Google Apps Script.",
+    storageHint: "A direct JSON link can be loaded when the provider allows browser access. Saving needs a write URL, for example from Google Apps Script. The token stays local and is not written to the shared JSON.",
     readUrlLabel: "JSON read link",
     readUrlPlaceholder: "Google Docs, Drive, Dropbox, or JSON link",
     writeUrlLabel: "JSON write link",
     writeUrlPlaceholder: "Optional: Apps Script or webhook URL",
+    tokenLabel: "Access token",
+    tokenPlaceholder: "Token from Google Apps Script",
     saveStorageSettings: "Remember link",
     loadRemoteJson: "Load from link",
     saveRemoteJson: "Save to link",
@@ -304,6 +308,7 @@ function defaultStorage() {
     format: "json",
     readUrl: "",
     writeUrl: "",
+    token: "",
     lastSyncedAt: "",
     lastSyncStatus: ""
   };
@@ -311,7 +316,7 @@ function defaultStorage() {
 
 function createSeedData() {
   return {
-    version: 3,
+    version: 4,
     locale: "de",
     storage: defaultStorage(),
     portfolio: seedItems.map((name, index) => ({
@@ -352,7 +357,7 @@ function loadData() {
 
 function normalizeData(data) {
   const normalized = {
-    version: 3,
+    version: 4,
     locale: data.locale || "de",
     storage: normalizeStorage(data.storage),
     portfolio: [],
@@ -394,6 +399,7 @@ function normalizeStorage(storage = {}) {
     format: storage.format || defaults.format,
     readUrl: storage.readUrl || storage.url || "",
     writeUrl: storage.writeUrl || "",
+    token: storage.token || "",
     lastSyncedAt: storage.lastSyncedAt || "",
     lastSyncStatus: storage.lastSyncStatus || ""
   };
@@ -435,6 +441,7 @@ function readStorageInputs() {
   current.provider = qs("#provider").value;
   current.readUrl = qs("#storageReadUrl").value.trim();
   current.writeUrl = qs("#storageWriteUrl").value.trim();
+  current.token = qs("#storageToken").value.trim();
   current.fileName = current.fileName || "kaufkiste.json";
   current.format = "json";
   return current;
@@ -797,6 +804,7 @@ function renderHeader() {
   qs("#provider").value = storage().provider;
   syncInputValue("#storageReadUrl", storage().readUrl);
   syncInputValue("#storageWriteUrl", storage().writeUrl);
+  syncInputValue("#storageToken", storage().token);
   qs("#remoteStatus").textContent = state.remoteStatus || syncStatusText();
   qs("#language").value = state.language;
 }
@@ -820,7 +828,7 @@ function renderStats() {
 }
 
 function renderJson() {
-  qs("#jsonPreview").textContent = JSON.stringify(state.data, null, 2);
+  qs("#jsonPreview").textContent = JSON.stringify(sharedDataSnapshot(), null, 2);
 }
 
 function render() {
@@ -835,7 +843,7 @@ function render() {
 }
 
 function exportJson() {
-  const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify(sharedDataSnapshot(), null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -866,10 +874,17 @@ function applyIncomingData(parsed, currentStorage = storage()) {
     ...currentStorage,
     ...state.data.storage,
     readUrl: state.data.storage.readUrl || currentStorage.readUrl,
-    writeUrl: state.data.storage.writeUrl || currentStorage.writeUrl
+    writeUrl: state.data.storage.writeUrl || currentStorage.writeUrl,
+    token: currentStorage.token || state.data.storage.token || ""
   });
   state.activeListId = state.data.lists[0]?.id;
   state.language = state.data.locale || state.language;
+}
+
+function sharedDataSnapshot() {
+  const snapshot = clone(state.data);
+  if (snapshot.storage) snapshot.storage.token = "";
+  return snapshot;
 }
 
 function rememberStorageSettings() {
@@ -880,6 +895,19 @@ function rememberStorageSettings() {
 function withQuery(url, params) {
   const separator = url.includes("?") ? "&" : "?";
   return `${url}${separator}${new URLSearchParams(params).toString()}`;
+}
+
+function withStorageToken(url, token) {
+  const trimmed = url.trim();
+  if (!token || !/^https?:\/\//i.test(trimmed)) return trimmed;
+
+  try {
+    const parsed = new URL(trimmed);
+    if (!parsed.searchParams.has("token")) parsed.searchParams.set("token", token);
+    return parsed.toString();
+  } catch {
+    return withQuery(trimmed, { token });
+  }
 }
 
 function transformedStorageUrl(url) {
@@ -912,9 +940,9 @@ function transformedStorageUrl(url) {
   return trimmed;
 }
 
-function candidateReadUrls(url) {
+function candidateReadUrls(url, token) {
   const transformed = transformedStorageUrl(url);
-  return [...new Set([url.trim(), transformed].filter(Boolean))];
+  return [...new Set([url.trim(), transformed].filter(Boolean).map((candidate) => withStorageToken(candidate, token)))];
 }
 
 function jsonpLoad(url) {
@@ -946,11 +974,12 @@ function jsonpLoad(url) {
   });
 }
 
-async function fetchRemoteJson(url) {
-  if (url.includes("script.google.com")) return jsonpLoad(url);
+async function fetchRemoteJson(url, token = "") {
+  const scriptUrl = withStorageToken(url, token);
+  if (scriptUrl.includes("script.google.com")) return jsonpLoad(scriptUrl);
 
   let lastError;
-  for (const candidate of candidateReadUrls(url)) {
+  for (const candidate of candidateReadUrls(url, token)) {
     try {
       const response = await fetch(candidate, { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -971,7 +1000,7 @@ async function loadRemoteJson() {
 
   try {
     setRemoteStatus("remoteLoading");
-    const parsed = await fetchRemoteJson(currentStorage.readUrl);
+    const parsed = await fetchRemoteJson(currentStorage.readUrl, currentStorage.token);
     applyIncomingData(parsed, currentStorage);
     storage().lastSyncedAt = new Date().toISOString();
     storage().lastSyncStatus = "loaded";
@@ -984,7 +1013,7 @@ async function loadRemoteJson() {
   }
 }
 
-function postForm(url, payload) {
+function postForm(url, payload, token = "") {
   return new Promise((resolve) => {
     const frameName = `kaufkiste-sync-${Date.now()}`;
     const iframe = document.createElement("iframe");
@@ -994,6 +1023,7 @@ function postForm(url, payload) {
       fileName: storage().fileName || "kaufkiste.json",
       source: "kaufkiste"
     };
+    if (token) fields.token = token;
 
     iframe.name = frameName;
     iframe.hidden = true;
@@ -1030,9 +1060,10 @@ async function saveRemoteJson() {
 
   try {
     setRemoteStatus("remoteSaving");
-    const payload = JSON.stringify(state.data, null, 2);
-    if (targetUrl.includes("script.google.com")) {
-      await postForm(targetUrl, payload);
+    const payload = JSON.stringify(sharedDataSnapshot(), null, 2);
+    const tokenizedTargetUrl = withStorageToken(targetUrl, currentStorage.token);
+    if (tokenizedTargetUrl.includes("script.google.com")) {
+      await postForm(tokenizedTargetUrl, payload, currentStorage.token);
       storage().lastSyncStatus = "sent";
       storage().lastSyncedAt = new Date().toISOString();
       state.remoteStatus = "";
@@ -1040,7 +1071,7 @@ async function saveRemoteJson() {
       return;
     }
 
-    const response = await fetch(targetUrl, {
+    const response = await fetch(tokenizedTargetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: payload
