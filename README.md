@@ -5,14 +5,15 @@ Kaufkiste ist ein mobiler PWA-Prototyp fuer einen gemeinsam nutzbaren Einkaufsze
 ## Funktionen
 
 - Einkaufszettel anlegen und bearbeiten
+- Einkaufszettel loeschen, auch wenn es der letzte Zettel ist
 - Standardmodus nach dem Anlegen: Planen
 - Artikel aus dem Portfolio aktivieren
 - Mengen im Zettel und Portfolio pflegen
+- Kategorien im Portfolio pflegen
 - Zuletzt genutzte Menge im Portfolio speichern
 - Einkaufsmodus mit kompakter mobiler Ansicht
 - Gekauft markierte Artikel werden deaktiviert und verschwinden aus der Einkaufsliste
 - Reihenfolge per Drag and Drop im Zettel und Portfolio anpassen
-- Reihenfolgestatistik fuer typische Einkaufs- und Aktivierungspositionen
 - Import und Export der JSON-Daten in den Einstellungen
 - JSON-Leselink fuer direkte JSON-Dateien, Dropbox-Links und Google-Links
 - JSON-Schreiblink fuer beschreibbare Endpunkte wie Google Apps Script oder Webhooks

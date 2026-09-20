@@ -38,15 +38,22 @@ const i18n = {
     settings: "Einstellungen",
     navList: "Zettel",
     portfolioName: "Name",
+    portfolioCategory: "Kategorie",
     portfolioUnit: "Anzahl",
     saveItem: "Speichern",
     cancel: "Abbrechen",
     edit: "Bearbeiten",
     delete: "Löschen",
+    deleteList: "Zettel löschen",
+    listDeleted: "Zettel gelöscht.",
+    confirmDeleteList: "Zettel „{name}“ wirklich löschen?",
+    emptyLists: "Noch kein Zettel. Lege oben einen neuen Zettel an.",
+    noActiveList: "Lege zuerst einen Zettel an.",
+    onList: "Auf dem Zettel",
     planHeadline: "Aktive und pausierte Artikel",
     shopHeadline: "Einkaufsroute",
     planHint: "Planen ist der Standardmodus. Hier fügst du Portfolio-Artikel hinzu, reaktivierst pausierte Artikel und pflegst Mengen.",
-    shopHint: "Im Einkaufsmodus ist nach gelernter Reihenfolge sortiert. Gekaufte Artikel werden deaktiviert und ausgeblendet.",
+    shopHint: "Im Einkaufsmodus siehst du aktive Artikel in deiner manuell gepflegten Reihenfolge. Gekaufte Artikel werden deaktiviert und ausgeblendet.",
     items: "Artikel",
     updated: "aktualisiert",
     add: "Hinzufügen",
@@ -109,15 +116,22 @@ const i18n = {
     settings: "Settings",
     navList: "List",
     portfolioName: "Name",
+    portfolioCategory: "Category",
     portfolioUnit: "Quantity",
     saveItem: "Save",
     cancel: "Cancel",
     edit: "Edit",
     delete: "Delete",
+    deleteList: "Delete list",
+    listDeleted: "List deleted.",
+    confirmDeleteList: "Delete list \"{name}\"?",
+    emptyLists: "No list yet. Create a new list above.",
+    noActiveList: "Create a list first.",
+    onList: "On list",
     planHeadline: "Active and paused items",
     shopHeadline: "Shopping route",
     planHint: "Planning is the default mode. Add portfolio items, reactivate paused items, and edit quantities.",
-    shopHint: "Shopping mode sorts by learned order. Bought items are disabled and hidden.",
+    shopHint: "Shopping mode shows active items in your manually maintained order. Bought items are disabled and hidden.",
     items: "items",
     updated: "updated",
     add: "Add",
@@ -273,6 +287,138 @@ const seedItems = [
   "Anderes Fleisch"
 ];
 
+const CATEGORIES = [
+  { id: "kuehltheke", de: "Kühltheke", en: "Chilled" },
+  { id: "gefriertruhe", de: "Gefriertruhe", en: "Frozen" },
+  { id: "lebensmittel", de: "Lebensmittel", en: "Groceries" },
+  { id: "getraenke", de: "Getränke", en: "Drinks" },
+  { id: "drogerie", de: "Drogerieartikel", en: "Drugstore" },
+  { id: "haushalt", de: "Haushalt", en: "Household" },
+  { id: "sonstiges", de: "Sonstiges", en: "Other" }
+];
+
+const CATEGORY_BY_ITEM = {
+  "Milch": "kuehltheke",
+  "Naturjoghurts": "kuehltheke",
+  "Kefir": "kuehltheke",
+  "Sandwich Scheiben": "kuehltheke",
+  "Geriebener Käse": "kuehltheke",
+  "Schmand": "kuehltheke",
+  "Kräuterfrischkäse Fässchen": "kuehltheke",
+  "Körniger Frischkäse": "kuehltheke",
+  "Fruchtzwerge": "kuehltheke",
+  "Frischkäse": "kuehltheke",
+  "Leberwurst": "kuehltheke",
+  "Schinkenwurst": "kuehltheke",
+  "Salami": "kuehltheke",
+  "Geflügel Rundwurst": "kuehltheke",
+  "Gehacktes": "kuehltheke",
+  "Milde Tyrolini": "kuehltheke",
+  "Würstchen": "kuehltheke",
+  "Speck Würfel": "kuehltheke",
+  "Hähnchen Brust Filet": "kuehltheke",
+  "Pizzateig": "kuehltheke",
+  "Eier": "lebensmittel",
+  "Kartoffeln": "lebensmittel",
+  "Äpfel (großer Sack)": "lebensmittel",
+  "Birnen": "lebensmittel",
+  "Bananen 2-3": "lebensmittel",
+  "Erdbeeren (nur hellrote)": "lebensmittel",
+  "Weintrauben dunkle": "lebensmittel",
+  "Paprika": "lebensmittel",
+  "Gurke": "lebensmittel",
+  "Cherry Tomaten": "lebensmittel",
+  "Zwiebeln": "lebensmittel",
+  "Brokkoli frisch": "lebensmittel",
+  "Möhren": "lebensmittel",
+  "Zucchini": "lebensmittel",
+  "Sahne": "kuehltheke",
+  "Streusel": "lebensmittel",
+  "Schokolade für Mona": "lebensmittel",
+  "Reis": "lebensmittel",
+  "Chips": "lebensmittel",
+  "Zwieback Brandt": "lebensmittel",
+  "Kaugummis": "lebensmittel",
+  "Cashew Kerne": "lebensmittel",
+  "Brot Chips mediterran": "lebensmittel",
+  "Mayonnaise": "lebensmittel",
+  "Toast": "lebensmittel",
+  "Fencheltee": "lebensmittel",
+  "Margarine": "kuehltheke",
+  "Erdbeer Marmelade": "lebensmittel",
+  "Hot Dog Brötchen": "lebensmittel",
+  "Burger Brötchen": "lebensmittel",
+  "Reiswaffeln": "lebensmittel",
+  "Nudeln": "lebensmittel",
+  "Spiral Nudeln (normale)": "lebensmittel",
+  "Spaghetti": "lebensmittel",
+  "Tomatenmark": "lebensmittel",
+  "Thunfisch": "lebensmittel",
+  "Salzstangen": "lebensmittel",
+  "Ritz": "lebensmittel",
+  "Kakao Düsis": "lebensmittel",
+  "Saltoos Seitenbacher": "lebensmittel",
+  "Dinkelflakes Seitenbacher": "lebensmittel",
+  "Seelenwärmer Schokolade und Vanille": "lebensmittel",
+  "Reiswaffeln klein Barbecue": "lebensmittel",
+  "Apfelmus": "lebensmittel",
+  "Waffeln mit Puderzucker": "lebensmittel",
+  "Blätterteig Gebäck von Biscotto": "lebensmittel",
+  "Kaffeekränze": "lebensmittel",
+  "Eier Kekse": "lebensmittel",
+  "Andere Kekse": "lebensmittel",
+  "Mini Zwieback Schoko": "lebensmittel",
+  "Gummizeugs Mona": "lebensmittel",
+  "Krupp Brot": "lebensmittel",
+  "Holland Brot": "lebensmittel",
+  "Soße Hollondaise": "lebensmittel",
+  "Pflanzen Creme": "kuehltheke",
+  "Meridol": "drogerie",
+  "Zahnpasta Mona": "drogerie",
+  "Bübchen Kids 2 in 1": "drogerie",
+  "Badeperlen Proben Mona": "drogerie",
+  "Zahnbürste Mona": "drogerie",
+  "Gesichtspeeling": "drogerie",
+  "Guhl Kraft und Fülle Sprühkur": "drogerie",
+  "Guhl Shampoo Kraft und Fülle": "drogerie",
+  "Zahnseide": "drogerie",
+  "Zahnzwischenraumbürsten": "drogerie",
+  "Deo Dominik": "drogerie",
+  "Papier Biomüllbeutel": "haushalt",
+  "Müllbeutel Plastik 25l": "haushalt",
+  "Kosmetik Müllbeutel 10l": "haushalt",
+  "Bad Kosmetik Beutel 5l": "haushalt",
+  "Alu Folie": "haushalt",
+  "Spülmaschinentabs": "haushalt",
+  "WC Gel Ente": "haushalt",
+  "WC Gel Dinger": "haushalt",
+  "Klobürsten": "haushalt",
+  "Klopapier": "haushalt",
+  "Küchentücher Rolle": "haushalt",
+  "Taschentücher": "haushalt",
+  "Kosmetik Tücher": "haushalt",
+  "Tandil black": "haushalt",
+  "Tandil white": "haushalt",
+  "Tandil Colour": "haushalt",
+  "Weichspüler": "haushalt",
+  "Hygienespüler": "haushalt",
+  "Calgon": "haushalt",
+  "Apfelsaft": "getraenke",
+  "Cola Zero": "getraenke",
+  "Activ top Sport rot": "getraenke",
+  "Spritzer Getränk gelb": "getraenke",
+  "O Saft mild": "getraenke",
+  "Laugen Mix Dinger": "gefriertruhe",
+  "Burger Pattys": "gefriertruhe",
+  "Eis": "gefriertruhe",
+  "Eis am Stiel klein": "gefriertruhe",
+  "Dino Schnitzel": "gefriertruhe",
+  "Frikandeln": "gefriertruhe",
+  "Pommes": "gefriertruhe",
+  "Kroketten": "gefriertruhe",
+  "Anderes Fleisch": "gefriertruhe"
+};
+
 const qs = (selector) => document.querySelector(selector);
 const qsa = (selector) => [...document.querySelectorAll(selector)];
 
@@ -301,6 +447,28 @@ function makeId(prefix) {
   return `${prefix}-${Date.now()}-${Math.round(Math.random() * 1000)}`;
 }
 
+function categoryForName(name) {
+  return CATEGORY_BY_ITEM[name] || "sonstiges";
+}
+
+function categoryLabel(categoryId) {
+  const category = CATEGORIES.find((candidate) => candidate.id === categoryId) || CATEGORIES[CATEGORIES.length - 1];
+  return category?.[state.language] || category?.de || categoryId;
+}
+
+function validCategory(categoryId) {
+  return CATEGORIES.some((category) => category.id === categoryId) ? categoryId : "sonstiges";
+}
+
+function sortOrder(value, fallback) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function nextSortOrder(items) {
+  return items.reduce((max, item, index) => Math.max(max, sortOrder(item.sortOrder, index + 1)), 0) + 1;
+}
+
 function defaultStorage() {
   return {
     provider: "iCloud",
@@ -316,14 +484,15 @@ function defaultStorage() {
 
 function createSeedData() {
   return {
-    version: 4,
+    version: 5,
     locale: "de",
     storage: defaultStorage(),
     portfolio: seedItems.map((name, index) => ({
       id: slug(name),
       names: { de: name, en: name },
       lastQuantity: "",
-      activationStats: { averagePosition: index + 1, timesActivated: 1 }
+      category: categoryForName(name),
+      sortOrder: index + 1
     })),
     lists: [{
       id: "ausprobieren",
@@ -335,7 +504,7 @@ function createSeedData() {
         itemId: slug(name),
         quantity: "",
         status: "active",
-        orderStats: { averagePosition: index + 1, timesBought: 1 }
+        sortOrder: index + 1
       }))
     }]
   };
@@ -357,7 +526,7 @@ function loadData() {
 
 function normalizeData(data) {
   const normalized = {
-    version: 4,
+    version: 5,
     locale: data.locale || "de",
     storage: normalizeStorage(data.storage),
     portfolio: [],
@@ -368,7 +537,8 @@ function normalizeData(data) {
     id: item.id || slug(item.name || `item-${index + 1}`),
     names: item.names || { de: item.name || item.id || `Artikel ${index + 1}`, en: item.name || item.id || `Item ${index + 1}` },
     lastQuantity: item.lastQuantity || item.defaultUnit || "",
-    activationStats: item.activationStats || { averagePosition: index + 1, timesActivated: 1 }
+    category: validCategory(item.category || categoryForName(item.name || item.names?.de || item.id)),
+    sortOrder: sortOrder(item.sortOrder, item.activationStats?.averagePosition || index + 1)
   }));
 
   normalized.lists = (data.lists || []).map((list) => ({
@@ -381,11 +551,10 @@ function normalizeData(data) {
       itemId: entry.itemId,
       quantity: entry.quantity || normalized.portfolio.find((item) => item.id === entry.itemId)?.lastQuantity || "",
       status: entry.status === "done" ? "inactive" : entry.status || "active",
-      orderStats: entry.orderStats || { averagePosition: index + 1, timesBought: 1 }
+      sortOrder: sortOrder(entry.sortOrder, entry.orderStats?.averagePosition || index + 1)
     }))
   }));
 
-  if (!normalized.lists.length) normalized.lists = createSeedData().lists;
   return normalized;
 }
 
@@ -482,28 +651,30 @@ function portfolioById(itemId) {
 }
 
 function listEntries(list) {
+  if (!list) return [];
   return list.entries
-    .map((entry) => ({ ...entry, item: portfolioById(entry.itemId) }))
+    .map((entry, index) => ({ ...entry, item: portfolioById(entry.itemId), fallbackOrder: index + 1 }))
     .filter((entry) => entry.item)
-    .sort((a, b) => (a.orderStats?.averagePosition || 99) - (b.orderStats?.averagePosition || 99));
+    .sort((a, b) => sortOrder(a.sortOrder, a.fallbackOrder) - sortOrder(b.sortOrder, b.fallbackOrder));
 }
 
 function visibleEntries(list) {
   const entries = listEntries(list);
-  return list.mode === "shop" ? entries.filter((entry) => entry.status === "active") : entries;
+  return list?.mode === "shop" ? entries.filter((entry) => entry.status === "active") : entries;
 }
 
 function sortedPortfolio() {
   return [...state.data.portfolio].sort((a, b) => {
-    const aPosition = a.activationStats?.averagePosition || 99;
-    const bPosition = b.activationStats?.averagePosition || 99;
-    if (aPosition !== bPosition) return aPosition - bPosition;
+    const order = sortOrder(a.sortOrder, 9999) - sortOrder(b.sortOrder, 9999);
+    if (order !== 0) return order;
     return itemName(a).localeCompare(itemName(b), state.language === "de" ? "de" : "en");
   });
 }
 
 function setMode(mode) {
-  activeList().mode = mode;
+  const list = activeList();
+  if (!list) return;
+  list.mode = mode;
   state.view = "list";
   persist("savedLocal");
 }
@@ -522,25 +693,26 @@ function createList(name) {
   persist("created");
 }
 
-function updateActivationStats(itemId) {
-  const ordered = sortedPortfolio();
-  const position = Math.max(1, ordered.findIndex((item) => item.id === itemId) + 1);
-  const item = portfolioById(itemId);
-  if (!item) return;
-  const stats = item.activationStats || { averagePosition: position, timesActivated: 0 };
-  const timesActivated = stats.timesActivated + 1;
-  item.activationStats = {
-    averagePosition: Number((((stats.averagePosition * stats.timesActivated) + position) / timesActivated).toFixed(2)),
-    timesActivated
-  };
+function deleteList(listId) {
+  const list = state.data.lists.find((candidate) => candidate.id === listId);
+  if (!list) return;
+  const message = t("confirmDeleteList").replace("{name}", list.name);
+  if (!window.confirm(message)) return;
+  state.data.lists = state.data.lists.filter((candidate) => candidate.id !== listId);
+  if (state.activeListId === listId) state.activeListId = state.data.lists[0]?.id || null;
+  persist("listDeleted");
 }
 
 function addOrReactivateItem(itemId) {
-  if (activeList().mode !== "plan") {
+  const list = activeList();
+  if (!list) {
+    showToast(t("noActiveList"));
+    return;
+  }
+  if (list.mode !== "plan") {
     showToast(t("portfolioLocked"));
     return;
   }
-  const list = activeList();
   const item = portfolioById(itemId);
   const existing = list.entries.find((entry) => entry.itemId === itemId);
 
@@ -552,30 +724,34 @@ function addOrReactivateItem(itemId) {
   if (existing) {
     existing.status = "active";
     if (!existing.quantity) existing.quantity = item?.lastQuantity || "";
+    if (!Number.isFinite(Number(existing.sortOrder))) existing.sortOrder = nextSortOrder(list.entries);
   } else {
     list.entries.push({
       id: makeId("entry"),
       itemId,
       quantity: item?.lastQuantity || "",
       status: "active",
-      orderStats: { averagePosition: list.entries.length + 1, timesBought: 1 }
+      sortOrder: nextSortOrder(list.entries)
     });
   }
 
-  updateActivationStats(itemId);
   persist("savedLocal");
 }
 
 function reactivateEntry(entryId) {
-  const entry = activeList().entries.find((candidate) => candidate.id === entryId);
+  const list = activeList();
+  if (!list) return;
+  const entry = list.entries.find((candidate) => candidate.id === entryId);
   if (!entry) return;
   entry.status = "active";
-  updateActivationStats(entry.itemId);
+  if (!Number.isFinite(Number(entry.sortOrder))) entry.sortOrder = nextSortOrder(list.entries);
   persist("savedLocal");
 }
 
 function updateQuantity(entryId, quantity) {
-  const entry = activeList().entries.find((candidate) => candidate.id === entryId);
+  const list = activeList();
+  if (!list) return;
+  const entry = list.entries.find((candidate) => candidate.id === entryId);
   if (!entry) return;
   entry.quantity = quantity.trim();
   const item = portfolioById(entry.itemId);
@@ -585,22 +761,16 @@ function updateQuantity(entryId, quantity) {
 
 function markBought(entryId) {
   const list = activeList();
+  if (!list) return;
   const entry = list.entries.find((candidate) => candidate.id === entryId);
   if (!entry) return;
-  const currentOrder = visibleEntries(list);
-  const position = Math.max(1, currentOrder.findIndex((candidate) => candidate.id === entryId) + 1);
-  const stats = entry.orderStats || { averagePosition: position, timesBought: 0 };
-  const timesBought = stats.timesBought + 1;
-  entry.orderStats = {
-    averagePosition: Number((((stats.averagePosition * stats.timesBought) + position) / timesBought).toFixed(2)),
-    timesBought
-  };
   entry.status = "inactive";
   persist("savedLocal");
 }
 
 function removeEntry(entryId) {
   const list = activeList();
+  if (!list) return;
   list.entries = list.entries.filter((entry) => entry.id !== entryId);
   persist("savedLocal");
 }
@@ -608,31 +778,37 @@ function removeEntry(entryId) {
 function resetPortfolioForm() {
   state.editingPortfolioId = null;
   qs("#portfolioName").value = "";
+  qs("#portfolioCategory").value = "sonstiges";
   qs("#portfolioUnit").value = "";
   qs("#savePortfolioItem").textContent = t("saveItem");
 }
 
 function editPortfolioItem(itemId) {
   const item = portfolioById(itemId);
-  if (!item || activeList().mode !== "plan") return;
+  const list = activeList();
+  if (!item || !list || list.mode !== "plan") return;
   state.editingPortfolioId = itemId;
   qs("#portfolioName").value = itemName(item);
+  qs("#portfolioCategory").value = validCategory(item.category);
   qs("#portfolioUnit").value = item.lastQuantity || "";
   qs("#savePortfolioItem").textContent = t("saveItem");
 }
 
 function savePortfolioItem() {
-  if (activeList().mode !== "plan") {
+  const list = activeList();
+  if (!list || list.mode !== "plan") {
     showToast(t("portfolioLocked"));
     return;
   }
   const name = qs("#portfolioName").value.trim();
+  const category = validCategory(qs("#portfolioCategory").value);
   const quantity = qs("#portfolioUnit").value.trim();
   if (!name) return;
 
   if (state.editingPortfolioId) {
     const item = portfolioById(state.editingPortfolioId);
     item.names = { de: name, en: name };
+    item.category = category;
     item.lastQuantity = quantity;
   } else {
     const baseId = slug(name);
@@ -645,8 +821,9 @@ function savePortfolioItem() {
     state.data.portfolio.push({
       id,
       names: { de: name, en: name },
+      category,
       lastQuantity: quantity,
-      activationStats: { averagePosition: state.data.portfolio.length + 1, timesActivated: 1 }
+      sortOrder: nextSortOrder(state.data.portfolio)
     });
   }
 
@@ -655,7 +832,8 @@ function savePortfolioItem() {
 }
 
 function deletePortfolioItem(itemId) {
-  if (activeList().mode !== "plan") {
+  const list = activeList();
+  if (!list || list.mode !== "plan") {
     showToast(t("portfolioLocked"));
     return;
   }
@@ -679,15 +857,18 @@ function moveId(ids, fromId, toId) {
 
 function reorderEntries(fromId, toId) {
   const list = activeList();
+  if (!list) return;
   const orderedIds = moveId(visibleEntries(list).map((entry) => entry.id), fromId, toId);
   if (!orderedIds) return;
-  orderedIds.forEach((entryId, index) => {
+  const movedIds = new Set(orderedIds);
+  let movedIndex = 0;
+  const fullOrder = listEntries(list).map((entry) => (
+    movedIds.has(entry.id) ? orderedIds[movedIndex++] : entry.id
+  ));
+  fullOrder.forEach((entryId, index) => {
     const entry = list.entries.find((candidate) => candidate.id === entryId);
     if (!entry) return;
-    entry.orderStats = {
-      averagePosition: index + 1,
-      timesBought: Math.max(entry.orderStats?.timesBought || 0, 1)
-    };
+    entry.sortOrder = index + 1;
   });
   persist("savedLocal");
 }
@@ -698,10 +879,7 @@ function reorderPortfolio(fromId, toId) {
   orderedIds.forEach((itemId, index) => {
     const item = portfolioById(itemId);
     if (!item) return;
-    item.activationStats = {
-      averagePosition: index + 1,
-      timesActivated: Math.max(item.activationStats?.timesActivated || 0, 1)
-    };
+    item.sortOrder = index + 1;
   });
   persist("savedLocal");
 }
@@ -716,24 +894,48 @@ function applyTranslations() {
   });
 }
 
+function renderCategoryOptions() {
+  const select = qs("#portfolioCategory");
+  const selected = validCategory(select.value || "sonstiges");
+  select.innerHTML = CATEGORIES.map((category) => `
+    <option value="${category.id}">${escapeHtml(category[state.language] || category.de)}</option>
+  `).join("");
+  select.value = selected;
+}
+
 function renderLists() {
   const list = activeList();
   qs("#listCount").textContent = state.data.lists.length;
+  if (!state.data.lists.length) {
+    qs("#lists").innerHTML = `<div class="empty compact-empty">${t("emptyLists")}</div>`;
+    return;
+  }
   qs("#lists").innerHTML = state.data.lists.map((candidate) => {
-    const active = candidate.id === list.id ? " active" : "";
+    const active = candidate.id === list?.id ? " active" : "";
     const count = candidate.entries.filter((entry) => entry.status === "active").length;
     const updated = new Date(candidate.updatedAt).toLocaleDateString(state.language === "de" ? "de-DE" : "en-US");
     return `
-      <button class="list-button${active}" type="button" data-list-id="${candidate.id}">
-        <span><strong>${escapeHtml(candidate.name)}</strong><span>${count} ${t("items")} · ${t("updated")} ${updated}</span></span>
-        <span class="badge">${count}</span>
-      </button>
+      <div class="list-row">
+        <button class="list-button${active}" type="button" data-list-id="${candidate.id}">
+          <span><strong>${escapeHtml(candidate.name)}</strong><span>${count} ${t("items")} · ${t("updated")} ${updated}</span></span>
+          <span class="badge">${count}</span>
+        </button>
+        <button class="danger square-action list-delete" type="button" data-delete-list="${candidate.id}" aria-label="${t("deleteList")}" title="${t("deleteList")}">×</button>
+      </div>
     `;
   }).join("");
 }
 
 function renderItems() {
   const list = activeList();
+  if (!list) {
+    qs("#itemsHeadline").textContent = t("planHeadline");
+    qs("#modeHint").textContent = t("noActiveList");
+    qs("#activeCount").textContent = "0";
+    qs("#planPortfolioSection").style.display = "none";
+    qs("#items").innerHTML = `<div class="empty">${t("noActiveList")}</div>`;
+    return;
+  }
   const entries = visibleEntries(list);
   qs("#itemsHeadline").textContent = list.mode === "shop" ? t("shopHeadline") : t("planHeadline");
   qs("#modeHint").textContent = list.mode === "shop" ? t("shopHint") : t("planHint");
@@ -770,21 +972,28 @@ function renderItems() {
 
 function renderPortfolio() {
   const list = activeList();
-  const known = new Set(list.entries.map((entry) => entry.itemId));
+  if (!list || list.mode !== "plan") {
+    qs("#portfolioCount").textContent = "0";
+    qs("#portfolio").innerHTML = "";
+    return;
+  }
   const query = state.portfolioQuery.trim().toLowerCase();
-  const items = sortedPortfolio().filter((item) => `${itemName(item)} ${item.lastQuantity}`.toLowerCase().includes(query));
+  const items = sortedPortfolio().filter((item) => `${itemName(item)} ${item.lastQuantity} ${categoryLabel(item.category)}`.toLowerCase().includes(query));
   qs("#portfolioCount").textContent = items.length;
   qs("#portfolio").innerHTML = items.map((item) => {
     const entry = list.entries.find((candidate) => candidate.itemId === item.id);
-    const label = entry && entry.status !== "active" ? t("reactivate") : t("add");
+    const isActive = entry?.status === "active";
+    const label = isActive ? t("onList") : entry ? t("reactivate") : t("add");
+    const addClass = isActive ? "ghost" : entry ? "secondary" : "primary";
     return `
       <div class="portfolio-item" draggable="true" data-drag-type="portfolio" data-item-id="${item.id}">
         <span>
           <strong>${escapeHtml(itemName(item))}</strong>
+          <span class="category-chip">${escapeHtml(categoryLabel(item.category))}</span>
           ${item.lastQuantity ? `<span>${t("portfolioUnit")}: ${escapeHtml(item.lastQuantity)}</span>` : ""}
         </span>
         <div class="portfolio-actions">
-          <button class="${known.has(item.id) ? "secondary" : "primary"} mini" type="button" data-add="${item.id}">${label}</button>
+          <button class="${addClass} mini" type="button" ${isActive ? "disabled" : `data-add="${item.id}"`}>${label}</button>
           <button class="ghost mini" type="button" data-edit-portfolio="${item.id}">${t("edit")}</button>
           <button class="danger mini" type="button" data-delete-portfolio="${item.id}">${t("delete")}</button>
         </div>
@@ -795,12 +1004,16 @@ function renderPortfolio() {
 
 function renderHeader() {
   const list = activeList();
-  state.activeListId = list.id;
-  qs("#activeListTitle").textContent = list.name;
-  qs("#activeListMeta").textContent = `${t("mode")}: ${list.mode === "shop" ? t("shop") : t("plan")} · ${list.entries.length} ${t("items")}`;
-  qs("#modeBadge").textContent = list.mode === "shop" ? t("shop") : t("plan");
-  qs("#planMode").classList.toggle("active", list.mode === "plan");
-  qs("#shopMode").classList.toggle("active", list.mode === "shop");
+  state.activeListId = list?.id || null;
+  qs("#activeListTitle").textContent = list?.name || t("lists");
+  qs("#activeListMeta").textContent = list
+    ? `${t("mode")}: ${list.mode === "shop" ? t("shop") : t("plan")} · ${list.entries.length} ${t("items")}`
+    : t("noActiveList");
+  qs("#modeBadge").textContent = list ? (list.mode === "shop" ? t("shop") : t("plan")) : "–";
+  qs("#planMode").classList.toggle("active", list?.mode === "plan");
+  qs("#shopMode").classList.toggle("active", list?.mode === "shop");
+  qs("#planMode").disabled = !list;
+  qs("#shopMode").disabled = !list;
   qs("#provider").value = storage().provider;
   syncInputValue("#storageReadUrl", storage().readUrl);
   syncInputValue("#storageWriteUrl", storage().writeUrl);
@@ -833,6 +1046,7 @@ function renderJson() {
 
 function render() {
   applyTranslations();
+  renderCategoryOptions();
   renderHeader();
   renderScreens();
   renderLists();
@@ -1114,6 +1328,7 @@ document.addEventListener("click", (event) => {
     state.view = "list";
     render();
   }
+  if (target.dataset.deleteList) deleteList(target.dataset.deleteList);
   if (target.dataset.view) setView(target.dataset.view);
   if (target.dataset.mode) setMode(target.dataset.mode);
   if (target.dataset.add) addOrReactivateItem(target.dataset.add);

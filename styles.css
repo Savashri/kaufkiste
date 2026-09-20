@@ -17,14 +17,26 @@
 
 * { box-sizing: border-box; }
 
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--bg);
   color: var(--ink);
 }
 
-button, input, select { font: inherit; }
+button, input, select {
+  min-width: 0;
+  font: inherit;
+}
 
 button {
   border: 1px solid transparent;
@@ -42,14 +54,19 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .app-shell {
   display: grid;
   gap: 10px;
+  width: 100%;
   max-width: 430px;
+  min-width: 0;
   min-height: 100vh;
   margin: 0 auto;
   padding: 8px;
   padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  overflow-x: hidden;
 }
 
 .panel {
+  min-width: 0;
+  max-width: 100%;
   background: rgba(255, 253, 249, .92);
   border: 1px solid rgba(217, 222, 216, .95);
   border-radius: var(--radius);
@@ -134,7 +151,13 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   box-shadow: 0 3px 12px rgba(23, 33, 29, .08);
 }
 
-.screen { display: none; padding: 8px; }
+.screen {
+  display: none;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 8px;
+}
 .screen.active { display: block; }
 
 .section-title {
@@ -173,6 +196,15 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .list-stack, .item-list, .portfolio-list, .new-list, .portfolio-form, .data-box {
   display: grid;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.list-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .list-button {
@@ -180,12 +212,15 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 8px;
   width: 100%;
+  min-width: 0;
   padding: 10px;
   border-color: var(--line);
   background: white;
   color: var(--ink);
   text-align: left;
 }
+
+.list-delete { align-self: stretch; }
 
 .list-button.active {
   border-color: rgba(24, 120, 91, .45);
@@ -218,6 +253,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .field-label {
   display: grid;
   gap: 4px;
+  min-width: 0;
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
@@ -225,6 +261,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .text-input, .select-input, .search {
   width: 100%;
+  max-width: 100%;
   min-height: 42px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -249,6 +286,11 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .ghost { border-color: var(--line); background: transparent; color: var(--ink); }
 .danger { border-color: rgba(185, 65, 65, .18); background: #fff1f1; color: var(--danger); }
 
+.primary:disabled, .secondary:disabled, .ghost:disabled, .danger:disabled {
+  cursor: default;
+  opacity: .58;
+}
+
 .icon-button {
   width: 42px;
   min-width: 42px;
@@ -262,8 +304,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .button-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
+  min-width: 0;
 }
 
 .storage-actions {
@@ -366,6 +409,19 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   font-size: 12px;
 }
 
+.category-chip {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  margin: 4px 0 2px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+}
+
 .portfolio-actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -395,6 +451,11 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   text-align: center;
 }
 
+.compact-empty {
+  min-height: 74px;
+  padding: 12px;
+}
+
 .hint {
   margin: 0;
   color: var(--muted);
@@ -420,6 +481,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .stat span { color: var(--muted); font-size: 12px; }
 
 .json-preview {
+  width: 100%;
+  max-width: 100%;
   max-height: 220px;
   overflow: auto;
   padding: 12px;
@@ -427,7 +490,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: #15201b;
   color: #d8efe5;
   font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .toast {
